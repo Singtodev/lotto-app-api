@@ -9,3 +9,10 @@ docker run -p 3000:3000 -d --name lotto-app-api lotto-app-api
 docker ps
 
 docker stop lotto-app-api
+
+
+# docker-compose
+
+docker-compose up -d
+
+docker-compose down
