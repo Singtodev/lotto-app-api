@@ -16,3 +16,5 @@ docker stop lotto-app-api
 docker-compose up -d
 
 docker-compose down
+
+docker exec -it lotto-app-api-app-1 /bin/sh
