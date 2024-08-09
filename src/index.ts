@@ -4,7 +4,7 @@ import { adminRouter, authRouter, lottoRouter, userRouter, walletRouter } from '
 import cookieParser from 'cookie-parser';
 import { checkCsrf, generateCsrfToken } from './middlewares/csrfMiddleware';
 import rateLimit from 'express-rate-limit';
-
+import bodyParser = require('body-parser');
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 8000;
@@ -14,6 +14,7 @@ const limiter = rateLimit({
   max: 1000 // จำกัด 1000 คำขอต่อ IP ใน 10 นาที
 });
 
+app.use(bodyParser.json());
 app.use(limiter);
 app.use(cookieParser());
 app.get('/get-csrf-token', generateCsrfToken, (req, res) => {
