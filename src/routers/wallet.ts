@@ -1,5 +1,4 @@
 import express, { Router, Request, Response } from 'express';
-import { csrfProtection } from '../middlewares/csrfMiddleware';
 
 const router: Router = express.Router();
 
@@ -18,7 +17,5 @@ router.post("/decrease",(req: Request, res: Response) => {
     res.json({ message: 'Decrease Wallet' });
 })
 
-
-router.use(csrfProtection);
 
 export default router;
