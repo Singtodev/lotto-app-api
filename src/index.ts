@@ -7,7 +7,7 @@ import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8000;
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 นาที
