@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import csrf from 'csurf';
 
 // สร้าง CSRF protection middleware
-const csrfProtection = csrf({
+export const csrfProtection = csrf({
   cookie: {
     key: '_csrf',
     httpOnly: true,

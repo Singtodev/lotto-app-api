@@ -1,4 +1,5 @@
 import express, { Router, Request, Response } from 'express';
+import { csrfProtection } from '../middlewares/csrfMiddleware';
 
 const router: Router = express.Router();
 
@@ -12,5 +13,7 @@ router.post('/login', (req: Request, res: Response) => {
     const userData = req.body;
     res.json({ message: 'Logged in successfully', data: userData });
 });
+
+router.use(csrfProtection);
 
 export default router;

@@ -1,4 +1,5 @@
 import express, { Router, Request, Response } from 'express';
+import { csrfProtection } from '../middlewares/csrfMiddleware';
 
 const router: Router = express.Router();
 
@@ -47,5 +48,7 @@ router.post('/check', (req: Request, res: Response) => {
   // Logic for checking lotto
   res.json({ message: 'Lotto checked' });
 });
+
+router.use(csrfProtection);
 
 export default router;
