@@ -7,3 +7,31 @@ services:
       - "8000:8000"
     environment:
       - NODE_ENV=production
+    depends_on:
+      - db
+      - phpmyadmin
+
+  db:
+    image: mysql:5.7
+    environment:
+      - MYSQL_DATABASE=bid_lotto
+      - MYSQL_USER=bid_lotto
+      - MYSQL_PASSWORD=bid_lotto
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8001:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=bid_lotto
+      - PMA_PASSWORD=bid_lotto
+      - PMA_ARBITRARY=1
+    depends_on:
+      - db
+
+volumes:
+  mysql-data:
