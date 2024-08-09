@@ -93,4 +93,31 @@ router.delete('/:id', (req: Request, res: Response) => {
   }
 });
 
+// POST create a new user
+router.post('/', (req: Request, res: Response) => {
+  const userData = req.body;
+
+  try {
+    condb.query('INSERT INTO users SET ?', [userData], (err: MysqlError | null, results: any) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal Server Error' });
+      } else {
+        const newUserId = results.insertId;
+        condb.query('SELECT * FROM users WHERE id = ?', [newUserId], (err: MysqlError | null, results: any) => {
+          if (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Internal Server Error' });
+          } else {
+            res.status(201).json({ message: 'Created new user', data: results[0] });
+          }
+        });
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 export default router;
