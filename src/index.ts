@@ -20,7 +20,7 @@ app.get('/get-csrf-token', generateCsrfToken, (req, res) => {
   res.json({ csrfToken: res.locals.csrfToken });
 });
 app.get('/', (req: Request, res: Response) => {
-  res.send('Lotto API');
+  res.send('Hello World ::> Bid Lotto API');
 });
 app.use('/api/users',checkCsrf, userRouter);
 app.use('/api/wallet',checkCsrf, walletRouter);
