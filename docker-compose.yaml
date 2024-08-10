@@ -30,6 +30,7 @@ services:
       - PMA_USER=bid_lotto
       - PMA_PASSWORD=bid_lotto
       - PMA_ARBITRARY=1
+      - PMA_CONFIG_FILE=/etc/phpmyadmin/config.user.inc.php
     depends_on:
       - db
     volumes:
@@ -41,5 +42,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${PWD}/phpmyadmin
       o: bind
+      device: ${PWD}/phpmyadmin/config.user.inc.php
