@@ -32,6 +32,14 @@ services:
       - PMA_ARBITRARY=1
     depends_on:
       - db
+    volumes:
+      - phpmyadmin-config:/etc/phpmyadmin
 
 volumes:
   mysql-data:
+  phpmyadmin-config:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/phpmyadmin/config.user.inc.php
+      o: bind
