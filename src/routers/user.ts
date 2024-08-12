@@ -44,29 +44,26 @@ router.get('/:id', (req: Request, res: Response) => {
 
 // PUT update a user
 router.put('/:id', (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const userData = req.body;
-
+  const lottoId = req.params.id;
+  const lottoData = req.body;
   try {
-    condb.query('SELECT * FROM users WHERE id = ?', [userId], (err: MysqlError | null, results: any) => {
+    condb.query('SELECT * FROM lottos WHERE id = ?', [lottoId], (err: MysqlError | null, results: any) => {
       if (err) {
         console.error(err);
         res.status(500).json({ message: 'Internal Server Error' });
       } else if (results.length === 0) {
-        res.status(404).json({ message: `User with ID ${userId} not found` });
+        res.status(404).json({ message: `Lotto with ID ${lottoId} not found` });
       } else {
-
-        delete userData.wallet;
-        delete userData.role;
-        // Merge the existing user data with the new data
-        const updatedUserData = { ...results[0], ...userData };
-
-        condb.query('UPDATE users SET ? WHERE id = ?', [updatedUserData, userId], (err: MysqlError | null, results: any) => {
-          if (err) {
-            console.error(err);
+        const updatedLottoData = { ...results[0], ...lottoData };
+        condb.query('UPDATE lottos SET ? WHERE id = ?', [updatedLottoData, lottoId], (updateErr: MysqlError | null, updateResults: any) => {
+          if (updateErr) {
+            console.error(updateErr);
             res.status(500).json({ message: 'Internal Server Error' });
           } else {
-            res.json({ message: `UPDATE user with id ${userId}`, data: updatedUserData });
+            res.json({ 
+              message: `Updated lotto with id ${lottoId}`, 
+              data: updatedLottoData 
+            });
           }
         });
       }
@@ -76,19 +73,18 @@ router.put('/:id', (req: Request, res: Response) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 // DELETE a user
 router.delete('/:id', (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const id = req.params.id;
   try {
-    condb.query('DELETE FROM users WHERE id = ?', [userId], (err: MysqlError | null, results: any) => {
+    condb.query('DELETE FROM lottos WHERE id = ?', [id], (err: MysqlError | null, result: any) => {
       if (err) {
         console.error(err);
         res.status(500).json({ message: 'Internal Server Error' });
-      } else if (results.affectedRows === 0) {
-        res.status(404).json({ message: `User with ID ${userId} not found` });
+      } else if (result.affectedRows === 0) {
+        res.status(404).json({ message: 'Lotto not found' });
       } else {
-        res.json({ message: `DELETE user with id ${userId}` });
+        res.json({ message: `Lotto with ID ${id} deleted` });
       }
     });
   } catch (err) {

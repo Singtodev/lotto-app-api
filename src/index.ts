@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import { adminRouter, authRouter, lottoRouter, userRouter, walletRouter } from './routers/_index';
+import { adminRouter, authRouter, cartRouter, lottoRouter, userRouter, walletRouter } from './routers/_index';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import bodyParser = require('body-parser');
@@ -33,7 +33,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 app.use('/api/users', authMiddleware , userRouter);
 app.use('/api/wallet', authMiddleware, walletRouter);
-app.use('/api/lotto', lottoRouter);
+app.use('/api/lotto', authMiddleware, lottoRouter);
+app.use('/api/cart', authMiddleware, cartRouter);
 app.use('/api/admin',authMiddleware,adminGuard ,adminRouter);
 app.use('/api/auth',authRouter);
 
