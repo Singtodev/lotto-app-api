@@ -19,4 +19,13 @@ const authMiddleware = (req:Request | any , res: Response, next: NextFunction) =
   }
 };
 
-export { authMiddleware}
+const adminGuard = (req: Request | any, res: Response, next: NextFunction) => {
+    if (req.user && req.user.role === 2) {
+      next();
+    } else {
+      res.status(403).json({ error: 'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้ เฉพาะผู้ดูแลระบบเท่านั้น' });
+    }
+  };
+
+
+export { authMiddleware , adminGuard}

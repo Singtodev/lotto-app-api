@@ -92,7 +92,8 @@ router.post('/login', validateAuthLoginBody, (req: Request, res: Response) => {
           id: user.id,
           phone: user.phone,
           first_name: user.first_name,
-          last_name: user.last_name
+          last_name: user.last_name,
+          role: user.role
         };
 
         const token = jwt.sign(userData, secret, { expiresIn: process.env.JWT_EXPIRE });

@@ -4,7 +4,7 @@ import { adminRouter, authRouter, lottoRouter, userRouter, walletRouter } from '
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import bodyParser = require('body-parser');
-import { authMiddleware } from './middleware/authMiddleware';
+import { adminGuard, authMiddleware } from './middleware/authMiddleware';
 const session = require('express-session')
 var morgan = require('morgan')
 dotenv.config();
@@ -32,9 +32,9 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello World : [ Bid Lotto API ]');
 });
 app.use('/api/users', authMiddleware , userRouter);
-app.use('/api/wallet', walletRouter);
+app.use('/api/wallet', authMiddleware, walletRouter);
 app.use('/api/lotto', lottoRouter);
-app.use('/api/admin', adminRouter);
+app.use('/api/admin',authMiddleware,adminGuard ,adminRouter);
 app.use('/api/auth',authRouter);
 
 app.listen(port, () => {
