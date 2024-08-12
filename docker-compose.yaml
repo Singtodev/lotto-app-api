@@ -10,9 +10,13 @@ services:
     depends_on:
       - db
       - phpmyadmin
+    networks:
+      - app-network
 
   db:
     image: mysql:5.7
+    ports:
+      - "3306:3306"
     environment:
       - MYSQL_DATABASE=bid_lotto
       - MYSQL_USER=bid_lotto
@@ -20,7 +24,9 @@ services:
       - MYSQL_ROOT_PASSWORD=root
     volumes:
       - mysql-data:/var/lib/mysql
-
+    networks:
+      - app-network
+    
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
@@ -32,6 +38,12 @@ services:
       - PMA_ARBITRARY=1
     depends_on:
       - db
+    networks:
+      - app-network
 
 volumes:
   mysql-data:
+
+networks:
+  app-network:
+    driver: bridge

@@ -4,14 +4,18 @@ import { adminRouter, authRouter, lottoRouter, userRouter, walletRouter } from '
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import bodyParser = require('body-parser');
+import { authMiddleware } from './middleware/authMiddleware';
 const session = require('express-session')
+var morgan = require('morgan')
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 8000;
+
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 นาที
   max: 1000 // จำกัด 1000 คำขอต่อ IP ใน 10 นาที
 });
+
 app.use(session({
   name: "bid-lotto",
   secret: "bid-lotto",
@@ -19,6 +23,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false
 }))
+app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(limiter);
@@ -26,7 +31,7 @@ app.use(cookieParser());
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World : [ Bid Lotto API ]');
 });
-app.use('/api/users', userRouter);
+app.use('/api/users', authMiddleware , userRouter);
 app.use('/api/wallet', walletRouter);
 app.use('/api/lotto', lottoRouter);
 app.use('/api/admin', adminRouter);
