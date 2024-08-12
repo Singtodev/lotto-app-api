@@ -55,6 +55,9 @@ router.put('/:id', (req: Request, res: Response) => {
       } else if (results.length === 0) {
         res.status(404).json({ message: `User with ID ${userId} not found` });
       } else {
+
+        delete userData.wallet;
+        delete userData.role;
         // Merge the existing user data with the new data
         const updatedUserData = { ...results[0], ...userData };
 
