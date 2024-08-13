@@ -186,22 +186,9 @@ router.post("/check", (req: Request, res: Response) => {
   });
 });
 
-router.get("/prizes", (req: Request, res: Response) => {
-  const { date } = req.query;
-
-  if (!date) {
-    return res.status(400).json({ message: "Date parameter is required" });
-  }
-
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(date as string)) {
-    return res
-      .status(400)
-      .json({ message: "Invalid date format. Use YYYY-MM-DD" });
-  }
-
+router.get("/prizes/reward/getall", (req: Request, res: Response) => {
   const query = `
-    SELECT dpid, date, number, reward_point, seq
+    SELECT *
     FROM draw_prizes
     ORDER BY seq ASC
   `;
@@ -216,7 +203,6 @@ router.get("/prizes", (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Prizes fetched successfully",
-      date: date,
       prizes: results,
     });
   });
