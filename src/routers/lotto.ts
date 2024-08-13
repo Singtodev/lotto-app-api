@@ -185,4 +185,40 @@ router.post("/check", (req: Request, res: Response) => {
     });
   });
 });
+
+router.get("/prizes", (req: Request, res: Response) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ message: "Date parameter is required" });
+  }
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(date as string)) {
+    return res
+      .status(400)
+      .json({ message: "Invalid date format. Use YYYY-MM-DD" });
+  }
+
+  const query = `
+    SELECT dpid, date, number, reward_point, seq
+    FROM draw_prizes
+    ORDER BY seq ASC
+  `;
+
+  condb.query(query, (err: any, results: any) => {
+    if (err) {
+      console.error("Error fetching prizes:", err);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while fetching prizes" });
+    }
+
+    return res.status(200).json({
+      message: "Prizes fetched successfully",
+      date: date,
+      prizes: results,
+    });
+  });
+});
 export default router;
