@@ -39,5 +39,6 @@ app.use('/api/admin',authMiddleware,adminGuard ,adminRouter);
 app.use('/api/auth',authRouter);
 
 app.listen(port, () => {
+  console.log(process.env.NODE_ENV);
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });
