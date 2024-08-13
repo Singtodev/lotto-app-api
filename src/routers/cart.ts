@@ -72,7 +72,7 @@ router.post('/add', (req: Request | any, res: Response) => {
     });
   });
 
-router.post('/buy', (req: Request | any, res: Response) => {
+router.post('/buy', async (req: Request | any, res: Response) => {
     const { id } = req.user;
   
     if (!id) {
@@ -207,7 +207,110 @@ router.post('/buy', (req: Request | any, res: Response) => {
         });
       });
     });
- });
+});
+
+router.get('/check', async (req: Request | any, res: Response) => {
+  try {
+    const { id } = req.user;
+
+    if (!id) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const cartQuery = `
+      SELECT l.*,c.cid
+      FROM carts c
+      LEFT JOIN lottos l ON c.lid = l.id
+      WHERE c.uid = ?
+    `;
+
+    // ใช้ condb.query แทน condb.execute
+    condb.query(cartQuery, [id], (err: any, rows: any) => {
+      if (err) {
+        console.error('Error querying cart:', err);
+        return res.status(500).json({ message: 'An error occurred while checking the cart' });
+      }
+
+      // แปลงผลลัพธ์เป็น array ของ object
+      const cartItems = rows as Array<{id: number, uid: number, product_id: number, quantity: number, price: number}>;
+
+      if (cartItems.length === 0) {
+        return res.status(200).json({ message: 'Cart is empty', items: [] });
+      }
+
+      // คำนวณยอดรวม
+      const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+
+      return res.status(200).json({
+        message: 'Cart items retrieved successfully',
+        items: cartItems,
+        total: total
+      });
+    });
+
+  } catch (error) {
+    console.error('Error checking cart:', error);
+    return res.status(500).json({ message: 'An error occurred while checking the cart' });
+  }
+});
+
+router.post('/remove', async (req: Request | any, res: Response) => {
+  try {
+    const { id } = req.user;
+    const { cid } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    if (!cid) {
+      return res.status(400).json({ message: 'Cart item ID is required' });
+    }
+
+    // Step 1: Get the lid from the cart
+    const getLidQuery = 'SELECT lid FROM carts WHERE cid = ? AND uid = ?';
+    condb.query(getLidQuery, [cid, id], (err: any, result: any) => {
+      if (err) {
+        console.error('Error getting lid from cart:', err);
+        return res.status(500).json({ message: 'An error occurred while getting lid from the cart' });
+      }
+
+      if (result.length === 0) {
+        return res.status(404).json({ message: 'Cart item not found or not owned by this user' });
+      }
+
+      const lid = result[0].lid;
+
+      // Step 2: Update lotto status to 1
+      const updateLottoQuery = 'UPDATE lottos SET status = 1 WHERE id = ?';
+      condb.query(updateLottoQuery, [lid], (updateErr: any) => {
+        if (updateErr) {
+          console.error('Error updating lotto status:', updateErr);
+          return res.status(500).json({ message: 'An error occurred while updating lotto status' });
+        }
+
+        // Step 3: Remove item from cart
+        const removeQuery = 'DELETE FROM carts WHERE cid = ? AND uid = ?';
+        condb.query(removeQuery, [cid, id], (removeErr: any, removeResult: any) => {
+          if (removeErr) {
+            console.error('Error removing item from cart:', removeErr);
+            return res.status(500).json({ message: 'An error occurred while removing the item from the cart' });
+          }
+
+          if (removeResult.affectedRows === 0) {
+            return res.status(404).json({ message: 'Cart item not found or not owned by this user' });
+          }
+
+          return res.status(200).json({ message: 'Item successfully removed from cart and lotto status updated' });
+        });
+      });
+    });
+
+  } catch (error) {
+    console.error('Error removing item from cart:', error);
+    return res.status(500).json({ message: 'An error occurred while removing the item from the cart' });
+  }
+});
 
 router.get('/order/item/:oid', (req: Request, res: Response) => {
     const { oid } = req.params;
