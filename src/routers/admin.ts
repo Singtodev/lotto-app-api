@@ -24,7 +24,7 @@ router.post("/reset", async (req: Request, res: Response) => {
     // ตรวจสอบสิทธิ์การเข้าถึง (ควรทำเพิ่มเติม)
 
     // รายชื่อตารางที่ต้องการ reset ทั้งหมด
-    const tables = ["order_items", "orders", "lottos", "users", "draw_prizes" , "carts"];
+    const tables = ["orders", "lottos", "users", "draw_prizes" , "carts"];
 
     // ปิดการตรวจสอบ foreign key constraints ชั่วคราว
     await query("SET FOREIGN_KEY_CHECKS = 0");
@@ -96,7 +96,7 @@ router.post(
         const values = lottoNumbers.map((number) => [
           number,
           price,
-          1,
+          0,
           expired_date,
         ]);
 
