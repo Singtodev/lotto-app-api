@@ -7,17 +7,23 @@ const router: Router = express.Router();
 // Get all lotto
 router.get("/", (req: Request, res: Response) => {
   try {
-    condb.query(
-      "SELECT * FROM lottos",
-      (err: MysqlError | null, results: any) => {
-        if (err) {
-          console.error(err);
-          res.status(500).json({ message: "Internal Server Error" });
-        } else {
-          res.json({ message: "All lotto retrieved", data: results });
-        }
+    const searchNumber = req.query.number;
+    let query = "SELECT * FROM lottos";
+    let queryParams: any[] = [];
+
+    if (searchNumber) {
+      query += " WHERE number LIKE ?";
+      queryParams.push(`%${searchNumber}%`);
+    }
+
+    condb.query(query, queryParams, (err: MysqlError | null, results: any) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
+      } else {
+        res.json({ message: "Lotto data retrieved", data: results });
       }
-    );
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
