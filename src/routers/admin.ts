@@ -24,7 +24,7 @@ router.post("/reset", async (req: Request, res: Response) => {
     // ตรวจสอบสิทธิ์การเข้าถึง (ควรทำเพิ่มเติม)
 
     // รายชื่อตารางที่ต้องการ reset ทั้งหมด
-    const tables = ["orders", "lottos", "users", "draw_prizes" , "carts"];
+    const tables = ["orders", "lottos", "users", "draw_prizes", "carts"];
 
     // ปิดการตรวจสอบ foreign key constraints ชั่วคราว
     await query("SET FOREIGN_KEY_CHECKS = 0");
@@ -137,14 +137,9 @@ router.post(
 );
 
 router.post("/draw_random_from_lottos", (req: Request, res: Response) => {
-  const { count = 1, rewardPoints = [], date = new Date() } = req.body;
+  const { rewardPoints = [] } = req.body;
 
   // Validate input
-  if (!Number.isInteger(count) || count <= 0) {
-    return res
-      .status(400)
-      .json({ message: "Invalid count. Must be a positive integer." });
-  }
   if (
     !Array.isArray(rewardPoints) ||
     !rewardPoints.every((point) => typeof point === "number")
@@ -153,144 +148,158 @@ router.post("/draw_random_from_lottos", (req: Request, res: Response) => {
       .status(400)
       .json({ message: "Invalid rewardPoints. Must be an array of numbers." });
   }
-  if (isNaN(new Date(date).getTime())) {
-    return res.status(400).json({ message: "Invalid date." });
-  }
 
-  const query = "SELECT id, number FROM lottos ORDER BY RAND() LIMIT ?";
-
-  condb.query(query, [count], (err: any, results: any) => {
-    if (err) {
-      console.error("Error selecting random lottos:", err);
-      return res
-        .status(500)
-        .json({ message: "An error occurred while selecting random lottos" });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: "No lottos available" });
-    }
-
-    // Get the current max seq for the given date
-    const getMaxSeqQuery =
-      "SELECT MAX(seq) as maxSeq FROM draw_prizes WHERE DATE(date) = DATE(?)";
-    condb.query(
-      getMaxSeqQuery,
-      [new Date(date)],
-      (seqErr: any, seqResults: any) => {
-        if (seqErr) {
-          console.error("Error getting max seq:", seqErr);
-          return res
-            .status(500)
-            .json({ message: "An error occurred while getting max sequence" });
-        }
-
-        const maxSeq = seqResults[0].maxSeq || 0;
-
-        const insertQuery =
-          "INSERT INTO draw_prizes (date, number, reward_point, seq) VALUES ?";
-        const values = results.map((result: any, index: number) => [
-          new Date(date),
-          result.number,
-          rewardPoints[index] || 0,
-          maxSeq + index + 1,
-        ]);
-
-        condb.query(insertQuery, [values], (insertErr: any) => {
-          if (insertErr) {
-            console.error("Error inserting draw prizes:", insertErr);
-            return res.status(500).json({
-              message: "An error occurred while saving the draw prizes",
-            });
-          }
-
-          return res.status(200).json({
-            message: "Random lottos selected and saved successfully",
-            prizes: results.map((result: any, index: number) => ({
-              number: result.number,
-              rewardPoint: rewardPoints[index] || 0,
-              seq: maxSeq + index + 1,
-            })),
-          });
-        });
-      }
-    );
-  });
-});
-
-router.post("/draw_random_number", (req: Request, res: Response) => {
-  const { count = 1, rewardPoints = [], date = new Date() } = req.body;
-
-  // Validate input
-  if (!Number.isInteger(count) || count <= 0) {
+  const count = rewardPoints.length;
+  if (count === 0) {
     return res
       .status(400)
-      .json({ message: "Invalid count. Must be a positive integer." });
-  }
-  if (
-    !Array.isArray(rewardPoints) ||
-    !rewardPoints.every((point) => typeof point === "number")
-  ) {
-    return res
-      .status(400)
-      .json({ message: "Invalid rewardPoints. Must be an array of numbers." });
-  }
-  if (isNaN(new Date(date).getTime())) {
-    return res.status(400).json({ message: "Invalid date." });
+      .json({ message: "rewardPoints array must not be empty." });
   }
 
-  // Get the current max seq for the given date
-  const getMaxSeqQuery =
-    "SELECT MAX(seq) as maxSeq FROM draw_prizes WHERE DATE(date) = DATE(?)";
-  condb.query(
-    getMaxSeqQuery,
-    [new Date(date)],
-    (seqErr: any, seqResults: any) => {
-      if (seqErr) {
-        console.error("Error getting max seq:", seqErr);
+  // Delete all existing records from draw_prizes
+  const deleteQuery = "DELETE FROM draw_prizes";
+  condb.query(deleteQuery, (deleteErr: any) => {
+    if (deleteErr) {
+      console.error("Error deleting existing draw prizes:", deleteErr);
+      return res.status(500).json({
+        message: "An error occurred while deleting existing draw prizes",
+      });
+    }
+
+    const query = "SELECT id, number FROM lottos ORDER BY RAND() LIMIT ?";
+
+    condb.query(query, [count], (err: any, results: any) => {
+      if (err) {
+        console.error("Error selecting random lottos:", err);
         return res
           .status(500)
-          .json({ message: "An error occurred while getting max sequence" });
+          .json({ message: "An error occurred while selecting random lottos" });
       }
 
-      const maxSeq = seqResults[0].maxSeq || 0;
-
-      const randomNumbers: string[] = [];
-
-      for (let i = 0; i < count; i++) {
-        const randomNumber = Math.floor(Math.random() * 999999) + 1;
-        const formattedNumber = randomNumber.toString().padStart(6, "0");
-        randomNumbers.push(formattedNumber);
+      if (results.length === 0) {
+        return res.status(404).json({ message: "No lottos available" });
       }
 
       const insertQuery =
-        "INSERT INTO draw_prizes (date, number, reward_point, seq) VALUES ?";
-      const values = randomNumbers.map((number, index) => [
-        new Date(date),
-        number,
-        rewardPoints[index] || 0,
-        maxSeq + index + 1,
+        "INSERT INTO draw_prizes (number, reward_point, seq) VALUES ?";
+      const values = results.map((result: any, index: number) => [
+        result.number,
+        rewardPoints[index],
+        index + 1,
       ]);
 
-      condb.query(insertQuery, [values], (err: any) => {
-        if (err) {
-          console.error("Error inserting draw prizes:", err);
+      condb.query(insertQuery, [values], (insertErr: any) => {
+        if (insertErr) {
+          console.error("Error inserting draw prizes:", insertErr);
           return res.status(500).json({
             message: "An error occurred while saving the draw prizes",
           });
         }
 
-        return res.status(200).json({
-          message: "Random numbers generated and saved successfully",
-          prizes: randomNumbers.map((number, index) => ({
-            number,
-            rewardPoint: rewardPoints[index] || 0,
-            seq: maxSeq + index + 1,
-          })),
+        // Update orders with status 1 to status 2
+        const updateOrdersQuery =
+          "UPDATE orders SET status = 2 WHERE status = 1";
+        condb.query(updateOrdersQuery, (updateErr: any, updateResult: any) => {
+          if (updateErr) {
+            console.error("Error updating orders:", updateErr);
+            return res.status(500).json({
+              message: "An error occurred while updating orders",
+            });
+          }
+
+          return res.status(200).json({
+            message:
+              "Existing draw prizes deleted, random lottos selected, saved successfully, and orders updated",
+            prizes: results.map((result: any, index: number) => ({
+              number: result.number,
+              rewardPoint: rewardPoints[index],
+              seq: index + 1,
+            })),
+            ordersUpdated: updateResult.affectedRows,
+          });
         });
       });
-    }
-  );
+    });
+  });
 });
 
+router.post("/draw_random_number", (req: Request, res: Response) => {
+  const { rewardPoints = [] } = req.body;
+
+  // Validate input
+  if (
+    !Array.isArray(rewardPoints) ||
+    !rewardPoints.every((point) => typeof point === "number")
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Invalid rewardPoints. Must be an array of numbers." });
+  }
+
+  const count = rewardPoints.length;
+  if (count === 0) {
+    return res
+      .status(400)
+      .json({ message: "rewardPoints array must not be empty." });
+  }
+
+  // Delete existing records from draw_prizes
+  const deleteQuery = "DELETE FROM draw_prizes";
+  condb.query(deleteQuery, (deleteErr: any) => {
+    if (deleteErr) {
+      console.error("Error deleting existing draw prizes:", deleteErr);
+      return res.status(500).json({
+        message: "An error occurred while deleting existing draw prizes",
+      });
+    }
+
+    // Generate random numbers
+    const randomNumbers: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const randomNumber = Math.floor(Math.random() * 999999) + 1;
+      const formattedNumber = randomNumber.toString().padStart(6, "0");
+      randomNumbers.push(formattedNumber);
+    }
+
+    // Insert new draw prizes
+    const insertQuery =
+      "INSERT INTO draw_prizes (number, reward_point, seq) VALUES ?";
+    const values = randomNumbers.map((number, index) => [
+      number,
+      rewardPoints[index],
+      index + 1,
+    ]);
+
+    condb.query(insertQuery, [values], (insertErr: any) => {
+      if (insertErr) {
+        console.error("Error inserting draw prizes:", insertErr);
+        return res.status(500).json({
+          message: "An error occurred while saving the draw prizes",
+        });
+      }
+
+      // Update orders with status 1 to status 2
+      const updateOrdersQuery = "UPDATE orders SET status = 2 WHERE status = 1";
+      condb.query(updateOrdersQuery, (updateErr: any, updateResult: any) => {
+        if (updateErr) {
+          console.error("Error updating orders:", updateErr);
+          return res.status(500).json({
+            message: "An error occurred while updating orders",
+          });
+        }
+
+        return res.status(200).json({
+          message:
+            "Existing draw prizes deleted, new numbers generated, saved successfully, and orders updated",
+          prizes: randomNumbers.map((number, index) => ({
+            number,
+            rewardPoint: rewardPoints[index],
+            seq: index + 1,
+          })),
+          ordersUpdated: updateResult.affectedRows,
+        });
+      });
+    });
+  });
+});
 export default router;
