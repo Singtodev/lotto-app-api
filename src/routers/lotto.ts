@@ -163,23 +163,27 @@ router.post("/check", (req: Request, res: Response) => {
         WHERE number = ?
       `;
 
-      condb.query(updateLottoQuery, [number], (updateErr: any, updateResult: any) => {
-        if (updateErr) {
-          console.error("Error updating lotto status:", updateErr);
-          return res
-            .status(500)
-            .json({ message: "An error occurred while updating lotto status" });
-        }
+      condb.query(
+        updateLottoQuery,
+        [number],
+        (updateErr: any, updateResult: any) => {
+          if (updateErr) {
+            console.error("Error updating lotto status:", updateErr);
+            return res.status(500).json({
+              message: "An error occurred while updating lotto status",
+            });
+          }
 
-        return res.status(200).json({
-          message: "Lotto checked successfully",
-          result: {
-            number: number,
-            win: false,
-            status: 4
-          },
-        });
-      });
+          return res.status(200).json({
+            message: "Lotto checked successfully",
+            result: {
+              number: number,
+              win: false,
+              status: 4,
+            },
+          });
+        }
+      );
     } else {
       const prize = results[0];
       return res.status(200).json({
@@ -223,16 +227,14 @@ router.post("/redeem", (req: Request | any, res: Response) => {
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "Lotto number not found" });
+      return res.status(404).json({ message: "ลอตเตอรี่ยังไม่ถูกคนซื้อ" });
     }
 
     const { uid, lid, wallet, status } = results[0];
 
     // ตรวจสอบว่าเป็นของผู้ใช้ที่ร้องขอหรือไม่
     if (uid != id) {
-      return res
-        .status(403)
-        .json({ message: "ไม่ใช่ลอตเตอรี่ของคุณ" });
+      return res.status(403).json({ message: "ไม่ใช่ลอตเตอรี่ของคุณ" });
     }
 
     // เช็คสถานะของ lotto
@@ -260,9 +262,7 @@ router.post("/redeem", (req: Request | any, res: Response) => {
       }
 
       if (prizeResults.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "No prize found for this number" });
+        return res.status(404).json({ message: "ไม่ถูกรางวัล" });
       }
 
       const rewardPoint = prizeResults[0].reward_point;
