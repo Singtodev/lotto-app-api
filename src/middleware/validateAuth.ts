@@ -2,11 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
 
 const validateAuthRegisterBody = [
-  body("phone")
+  body("email")
+    .isEmail()
     .notEmpty()
-    .withMessage("กรุณากรอกหมายเลขโทรศัพท์")
-    .isLength({ min: 10, max: 10 })
-    .withMessage("หมายเลขโทรศัพท์ต้องมีความยาว 10 ตัวอักษร"),
+    .withMessage("กรุณากรอกอีเมลล์")
+    .isLength({ min: 6, max: 50 })
+    .withMessage("อีเมลล์ต้องมีความยาว 6 ตัวอักษร"),
   body("last_name")
     .notEmpty()
     .withMessage("กรุณากรอกนามสกุล")
@@ -45,9 +46,9 @@ const validateAuthRegisterBody = [
 ];
 
 const validateAuthLoginBody = [
-  body("phone")
+  body("email")
     .notEmpty()
-    .withMessage("กรุณากรอกหมายเลขโทรศัพท์")
+    .withMessage("กรุณากรอกอีเมลล์")
     .isLength({ min: 10, max: 10 })
     .withMessage("หมายเลขโทรศัพท์ต้องมีความยาว 10 ตัวอักษร"),
   body("password")

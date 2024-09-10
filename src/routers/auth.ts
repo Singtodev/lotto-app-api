@@ -18,8 +18,8 @@ router.post(
     const userData: UserModel | any = req.body;
 
     condb.query(
-      "SELECT * FROM users WHERE phone = ?",
-      [userData.phone],
+      "SELECT * FROM users WHERE email = ?",
+      [userData.email],
       (error: any, existingUsers: any) => {
         if (error) {
           console.error("Error checking existing user:", error);
@@ -31,7 +31,7 @@ router.post(
         if (Array.isArray(existingUsers) && existingUsers.length > 0) {
           return res
             .status(400)
-            .json({ message: "Phone number already exists" });
+            .json({ message: "email number already exists" });
         }
 
         bcrypt.hash(userData.password!, 10, (err, hashedPassword) => {
@@ -43,9 +43,9 @@ router.post(
           }
 
           condb.query(
-            "INSERT INTO users (phone, first_name, last_name, password) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (email, first_name, last_name, password) VALUES (?, ?, ?, ?)",
             [
-              userData.phone,
+              userData.email,
               userData.first_name,
               userData.last_name,
               hashedPassword,
@@ -83,11 +83,11 @@ router.post(
 );
 
 router.post("/login", (req: Request, res: Response) => {
-  const { phone, password } = req.body;
+  const { email, password } = req.body;
 
   condb.query(
-    "SELECT * FROM users WHERE phone = ?",
-    [phone],
+    "SELECT * FROM users WHERE email = ?",
+    [email],
     (error: any, users: any) => {
       if (error) {
         console.error("Error finding user:", error);
@@ -116,7 +116,7 @@ router.post("/login", (req: Request, res: Response) => {
 
         const userData = {
           id: user.id,
-          phone: user.phone,
+          email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
           role: user.role,
