@@ -231,12 +231,10 @@ router.post("/draw_random_from_lottos_sell", (req: Request, res: Response) => {
     !Array.isArray(rewardPoints) ||
     !rewardPoints.every((point) => typeof point === "number")
   ) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "รูปแบบ rewardPoints ไม่ถูกต้อง ต้องเป็นอาร์เรย์ของตัวเลขเท่านั้น",
-      });
+    return res.status(400).json({
+      message:
+        "รูปแบบ rewardPoints ไม่ถูกต้อง ต้องเป็นอาร์เรย์ของตัวเลขเท่านั้น",
+    });
   }
 
   const count = rewardPoints.length;
@@ -302,14 +300,25 @@ router.post("/draw_random_from_lottos_sell", (req: Request, res: Response) => {
           });
         }
 
-        return res.status(200).json({
-          message: "การสุ่มรางวัลเสร็จสิ้นและบันทึกผลเรียบร้อยแล้ว",
-          numbersCount: results.length,
-          prizes: results.map((result: any, index: number) => ({
-            number: result.number,
-            rewardPoint: rewardPoints[index],
-            seq: index + 1,
-          })),
+        const updateOrdersQuery =
+          "UPDATE orders SET status = 2 WHERE status = 1";
+        condb.query(updateOrdersQuery, (updateErr: any, updateResult: any) => {
+          if (updateErr) {
+            console.error("Error updating orders:", updateErr);
+            return res.status(500).json({
+              message: "An error occurred while updating orders",
+            });
+          }
+
+          return res.status(200).json({
+            message: "การสุ่มรางวัลเสร็จสิ้นและบันทึกผลเรียบร้อยแล้ว",
+            numbersCount: results.length,
+            prizes: results.map((result: any, index: number) => ({
+              number: result.number,
+              rewardPoint: rewardPoints[index],
+              seq: index + 1,
+            })),
+          });
         });
       });
     });
