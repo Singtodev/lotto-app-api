@@ -223,6 +223,99 @@ router.post("/draw_random_from_lottos", (req: Request, res: Response) => {
   });
 });
 
+router.post("/draw_random_from_lottos_sell", (req: Request, res: Response) => {
+  const { rewardPoints = [] } = req.body;
+
+  // ตรวจสอบข้อมูลนำเข้า
+  if (
+    !Array.isArray(rewardPoints) ||
+    !rewardPoints.every((point) => typeof point === "number")
+  ) {
+    return res
+      .status(400)
+      .json({
+        message:
+          "รูปแบบ rewardPoints ไม่ถูกต้อง ต้องเป็นอาร์เรย์ของตัวเลขเท่านั้น",
+      });
+  }
+
+  const count = rewardPoints.length;
+  if (count === 0) {
+    return res
+      .status(400)
+      .json({ message: "อาร์เรย์ rewardPoints ต้องไม่ว่างเปล่า" });
+  }
+
+  if (count < 5) {
+    return res.status(400).json({ message: "ต้องออกรางวัลขั้นต่ำ 5 รางวัล" });
+  }
+
+  // ลบข้อมูลรางวัลเดิมทั้งหมดจากตาราง draw_prizes
+  const deleteQuery = "DELETE FROM draw_prizes";
+  condb.query(deleteQuery, (deleteErr: any) => {
+    if (deleteErr) {
+      console.error("เกิดข้อผิดพลาดในการลบรางวัลที่มีอยู่:", deleteErr);
+      return res.status(500).json({
+        message: "เกิดข้อผิดพลาดในการลบรางวัลที่มีอยู่",
+      });
+    }
+
+    // เลือกลอตเตอรี่แบบสุ่มจากที่ขายไปแล้ว
+    const query = `
+      SELECT DISTINCT lottos.id, lottos.number 
+      FROM carts 
+      LEFT JOIN lottos ON carts.lid = lottos.id 
+      WHERE lottos.status = 2
+      ORDER BY RAND() 
+      LIMIT ?
+    `;
+
+    condb.query(query, [count], (err: any, results: any) => {
+      if (err) {
+        console.error("เกิดข้อผิดพลาดในการเลือกลอตเตอรี่แบบสุ่ม:", err);
+        return res
+          .status(500)
+          .json({ message: "เกิดข้อผิดพลาดในการเลือกลอตเตอรี่แบบสุ่ม" });
+      }
+
+      if (results.length < 5) {
+        return res.status(400).json({
+          message:
+            "ไม่สามารถทำการสุ่มได้ เนื่องจากมีการซื้อลอตเตอรี่น้อยกว่า 5 เลข",
+          numbersCount: results.length,
+        });
+      }
+
+      const insertQuery =
+        "INSERT INTO draw_prizes (number, reward_point, seq) VALUES ?";
+      const values = results.map((result: any, index: number) => [
+        result.number,
+        rewardPoints[index],
+        index + 1,
+      ]);
+
+      condb.query(insertQuery, [values], (insertErr: any) => {
+        if (insertErr) {
+          console.error("เกิดข้อผิดพลาดในการบันทึกรางวัล:", insertErr);
+          return res.status(500).json({
+            message: "เกิดข้อผิดพลาดในการบันทึกรางวัล",
+          });
+        }
+
+        return res.status(200).json({
+          message: "การสุ่มรางวัลเสร็จสิ้นและบันทึกผลเรียบร้อยแล้ว",
+          numbersCount: results.length,
+          prizes: results.map((result: any, index: number) => ({
+            number: result.number,
+            rewardPoint: rewardPoints[index],
+            seq: index + 1,
+          })),
+        });
+      });
+    });
+  });
+});
+
 router.post("/draw_random_number", (req: Request, res: Response) => {
   const { rewardPoints = [] } = req.body;
 
