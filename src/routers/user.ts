@@ -110,9 +110,14 @@ router.put("/:id", (req: Request, res: Response) => {
                       .json({ message: "Internal Server Error" });
                   }
 
+                  // แสดงข้อมูลในรูปแบบที่ต้องการ
                   res.json({
-                    message: `Updated user with ID ${userId}`,
-                    data: updatedUserData,
+                    id: updatedUserData.id,
+                    email: updatedUserData.email,
+                    first_name: updatedUserData.first_name,
+                    last_name: updatedUserData.last_name,
+                    role: existingUser.role, // ใช้ role เดิม
+                    wallet: existingUser.wallet, // ใช้ wallet เดิม
                   });
                 }
               );
@@ -136,9 +141,14 @@ router.put("/:id", (req: Request, res: Response) => {
                   .json({ message: "Internal Server Error" });
               }
 
+              // แสดงข้อมูลในรูปแบบที่ต้องการ
               res.json({
-                message: `Updated user with ID ${userId}`,
-                data: updatedUserData,
+                id: updatedUserData.id,
+                email: updatedUserData.email,
+                first_name: updatedUserData.first_name,
+                last_name: updatedUserData.last_name,
+                role: existingUser.role, // ใช้ role เดิม
+                wallet: existingUser.wallet, // ใช้ wallet เดิม
               });
             }
           );
