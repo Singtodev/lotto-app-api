@@ -61,13 +61,15 @@ router.put("/:id", (req: Request, res: Response) => {
       (err: MysqlError | null, results: any) => {
         if (err) {
           console.error(err);
-          return res.status(500).json({ message: "Internal Server Error" });
+          return res
+            .status(500)
+            .json({ message: "Internal Server Error", data: {} });
         }
 
         if (results.length === 0) {
           return res
             .status(404)
-            .json({ message: `User with ID ${userId} not found` });
+            .json({ message: `User with ID ${userId} not found`, data: {} });
         }
 
         const existingUser = results[0];
@@ -84,13 +86,13 @@ router.put("/:id", (req: Request, res: Response) => {
                 console.error(emailCheckErr);
                 return res
                   .status(500)
-                  .json({ message: "Internal Server Error" });
+                  .json({ message: "Internal Server Error", data: {} });
               }
 
               if (emailCheckResults.length > 0) {
                 return res
                   .status(400)
-                  .json({ message: "Email already exists" });
+                  .json({ message: "Email already exists", data: {} });
               }
 
               // ลบข้อมูลที่ไม่ต้องการก่อนอัปเดต
@@ -107,17 +109,20 @@ router.put("/:id", (req: Request, res: Response) => {
                     console.error(updateErr);
                     return res
                       .status(500)
-                      .json({ message: "Internal Server Error" });
+                      .json({ message: "Internal Server Error", data: {} });
                   }
 
                   // แสดงข้อมูลในรูปแบบที่ต้องการ
                   res.json({
-                    id: updatedUserData.id,
-                    email: updatedUserData.email,
-                    first_name: updatedUserData.first_name,
-                    last_name: updatedUserData.last_name,
-                    role: existingUser.role, // ใช้ role เดิม
-                    wallet: existingUser.wallet, // ใช้ wallet เดิม
+                    message: `Updated user with ID ${userId}`,
+                    data: {
+                      id: updatedUserData.id,
+                      email: updatedUserData.email,
+                      first_name: updatedUserData.first_name,
+                      last_name: updatedUserData.last_name,
+                      role: existingUser.role, // ใช้ role เดิม
+                      wallet: existingUser.wallet, // ใช้ wallet เดิม
+                    },
                   });
                 }
               );
@@ -138,17 +143,20 @@ router.put("/:id", (req: Request, res: Response) => {
                 console.error(updateErr);
                 return res
                   .status(500)
-                  .json({ message: "Internal Server Error" });
+                  .json({ message: "Internal Server Error", data: {} });
               }
 
               // แสดงข้อมูลในรูปแบบที่ต้องการ
               res.json({
-                id: updatedUserData.id,
-                email: updatedUserData.email,
-                first_name: updatedUserData.first_name,
-                last_name: updatedUserData.last_name,
-                role: existingUser.role, // ใช้ role เดิม
-                wallet: existingUser.wallet, // ใช้ wallet เดิม
+                message: `Updated user with ID ${userId}`,
+                data: {
+                  id: updatedUserData.id,
+                  email: updatedUserData.email,
+                  first_name: updatedUserData.first_name,
+                  last_name: updatedUserData.last_name,
+                  role: existingUser.role, // ใช้ role เดิม
+                  wallet: existingUser.wallet, // ใช้ wallet เดิม
+                },
               });
             }
           );
@@ -157,7 +165,7 @@ router.put("/:id", (req: Request, res: Response) => {
     );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error", data: {} });
   }
 });
 // DELETE a user
