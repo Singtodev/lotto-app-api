@@ -52,34 +52,94 @@ router.get("/:id", (req: Request, res: Response) => {
 router.put("/:id", (req: Request, res: Response) => {
   const userId = req.params.id;
   const userData = req.body;
+
   try {
+    // ตรวจสอบว่าผู้ใช้มีอยู่ในฐานข้อมูลหรือไม่
     condb.query(
       "SELECT * FROM users WHERE id = ?",
       [userId],
       (err: MysqlError | null, results: any) => {
         if (err) {
           console.error(err);
-          res.status(500).json({ message: "Internal Server Error" });
-        } else if (results.length === 0) {
-          res.status(404).json({ message: `User with ID ${userId} not found` });
+          return res.status(500).json({ message: "Internal Server Error" });
+        }
+
+        if (results.length === 0) {
+          return res
+            .status(404)
+            .json({ message: `User with ID ${userId} not found` });
+        }
+
+        const existingUser = results[0];
+        const updatedUserData = { ...existingUser, ...userData };
+
+        // เช็คว่ามีการเปลี่ยนแปลงอีเมลหรือไม่
+        if (userData.email && userData.email !== existingUser.email) {
+          // ตรวจสอบว่าอีเมลที่ต้องการอัปเดตมีอยู่ในฐานข้อมูลหรือไม่
+          condb.query(
+            "SELECT * FROM users WHERE email = ?",
+            [userData.email],
+            (emailCheckErr: MysqlError | null, emailCheckResults: any) => {
+              if (emailCheckErr) {
+                console.error(emailCheckErr);
+                return res
+                  .status(500)
+                  .json({ message: "Internal Server Error" });
+              }
+
+              if (emailCheckResults.length > 0) {
+                return res
+                  .status(400)
+                  .json({ message: "Email already exists" });
+              }
+
+              // ลบข้อมูลที่ไม่ต้องการก่อนอัปเดต
+              delete updatedUserData.role;
+              delete updatedUserData.wallet;
+              delete updatedUserData.password;
+
+              // อัปเดตข้อมูลผู้ใช้ในฐานข้อมูล
+              condb.query(
+                "UPDATE users SET ? WHERE id = ?",
+                [updatedUserData, userId],
+                (updateErr: MysqlError | null) => {
+                  if (updateErr) {
+                    console.error(updateErr);
+                    return res
+                      .status(500)
+                      .json({ message: "Internal Server Error" });
+                  }
+
+                  res.json({
+                    message: `Updated user with ID ${userId}`,
+                    data: updatedUserData,
+                  });
+                }
+              );
+            }
+          );
         } else {
-          delete userData.role;
-          delete userData.wallet;
-          delete userData.password;
-          const updatedUserData = { ...results[0], ...userData };
+          // ลบข้อมูลที่ไม่ต้องการก่อนอัปเดต
+          delete updatedUserData.role;
+          delete updatedUserData.wallet;
+          delete updatedUserData.password;
+
+          // อัปเดตข้อมูลผู้ใช้ในฐานข้อมูล
           condb.query(
             "UPDATE users SET ? WHERE id = ?",
             [updatedUserData, userId],
-            (updateErr: MysqlError | null, updateResults: any) => {
+            (updateErr: MysqlError | null) => {
               if (updateErr) {
                 console.error(updateErr);
-                res.status(500).json({ message: "Internal Server Error" });
-              } else {
-                res.json({
-                  message: `Updated user with id ${userId}`,
-                  data: updatedUserData,
-                });
+                return res
+                  .status(500)
+                  .json({ message: "Internal Server Error" });
               }
+
+              res.json({
+                message: `Updated user with ID ${userId}`,
+                data: updatedUserData,
+              });
             }
           );
         }
