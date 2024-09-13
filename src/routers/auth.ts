@@ -31,7 +31,7 @@ router.post(
         if (Array.isArray(existingUsers) && existingUsers.length > 0) {
           return res
             .status(400)
-            .json({ message: "email number already exists" });
+            .json({ message: "Email already exists" });
         }
 
         bcrypt.hash(userData.password!, 10, (err, hashedPassword) => {
